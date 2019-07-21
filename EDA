@@ -1,0 +1,1229 @@
+Basic data analysis or exploratory data analysis (EDA)
+In [1]:
+from __future__ import print_function
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+In [2]:
+# Read Training dataset as well as drop the index column
+training_data = pd.read_csv('./data/cs-training.csv').drop('Unnamed: 0', axis = 1)
+
+
+# For each column heading we replace "-" and convert the heading in lowercase 
+cleancolumn = []
+for i in range(len(training_data.columns)):
+    cleancolumn.append(training_data.columns[i].replace('-', '').lower())
+training_data.columns = cleancolumn
+In [3]:
+# print the 5 records of the traiing dataset
+training_data.head()
+Out[3]:
+seriousdlqin2yrs	revolvingutilizationofunsecuredlines	age	numberoftime3059dayspastduenotworse	debtratio	monthlyincome	numberofopencreditlinesandloans	numberoftimes90dayslate	numberrealestateloansorlines	numberoftime6089dayspastduenotworse	numberofdependents
+0	1	0.766127	45	2	0.802982	9120.0	13	0	6	0	2.0
+1	0	0.957151	40	0	0.121876	2600.0	4	0	0	0	1.0
+2	0	0.658180	38	1	0.085113	3042.0	2	1	0	0	0.0
+3	0	0.233810	30	0	0.036050	3300.0	5	0	0	0	0.0
+4	0	0.907239	49	1	0.024926	63588.0	7	0	1	0	0.0
+In [4]:
+# Describe the all statistical properties of the training dataset
+training_data[training_data.columns[1:]].describe()
+Out[4]:
+revolvingutilizationofunsecuredlines	age	numberoftime3059dayspastduenotworse	debtratio	monthlyincome	numberofopencreditlinesandloans	numberoftimes90dayslate	numberrealestateloansorlines	numberoftime6089dayspastduenotworse	numberofdependents
+count	150000.000000	150000.000000	150000.000000	150000.000000	1.202690e+05	150000.000000	150000.000000	150000.000000	150000.000000	146076.000000
+mean	6.048438	52.295207	0.421033	353.005076	6.670221e+03	8.452760	0.265973	1.018240	0.240387	0.757222
+std	249.755371	14.771866	4.192781	2037.818523	1.438467e+04	5.145951	4.169304	1.129771	4.155179	1.115086
+min	0.000000	0.000000	0.000000	0.000000	0.000000e+00	0.000000	0.000000	0.000000	0.000000	0.000000
+25%	0.029867	41.000000	0.000000	0.175074	3.400000e+03	5.000000	0.000000	0.000000	0.000000	0.000000
+50%	0.154181	52.000000	0.000000	0.366508	5.400000e+03	8.000000	0.000000	1.000000	0.000000	0.000000
+75%	0.559046	63.000000	0.000000	0.868254	8.249000e+03	11.000000	0.000000	2.000000	0.000000	1.000000
+max	50708.000000	109.000000	98.000000	329664.000000	3.008750e+06	58.000000	98.000000	54.000000	98.000000	20.000000
+In [5]:
+training_data[training_data.columns[1:]].median()
+Out[5]:
+revolvingutilizationofunsecuredlines       0.154181
+age                                       52.000000
+numberoftime3059dayspastduenotworse        0.000000
+debtratio                                  0.366508
+monthlyincome                           5400.000000
+numberofopencreditlinesandloans            8.000000
+numberoftimes90dayslate                    0.000000
+numberrealestateloansorlines               1.000000
+numberoftime6089dayspastduenotworse        0.000000
+numberofdependents                         0.000000
+dtype: float64
+In [6]:
+training_data[training_data.columns[1:]].mean()
+Out[6]:
+revolvingutilizationofunsecuredlines       6.048438
+age                                       52.295207
+numberoftime3059dayspastduenotworse        0.421033
+debtratio                                353.005076
+monthlyincome                           6670.221237
+numberofopencreditlinesandloans            8.452760
+numberoftimes90dayslate                    0.265973
+numberrealestateloansorlines               1.018240
+numberoftime6089dayspastduenotworse        0.240387
+numberofdependents                         0.757222
+dtype: float64
+In [7]:
+# This give you the calulation of the target lebels. Which category of the target lebel is how many percentage.
+total_len = len(training_data['seriousdlqin2yrs'])
+percentage_labels = (training_data['seriousdlqin2yrs'].value_counts()/total_len)*100
+percentage_labels
+Out[7]:
+0    93.316
+1     6.684
+Name: seriousdlqin2yrs, dtype: float64
+In [8]:
+# Graphical representation of the target label percentage.
+sns.set()
+sns.countplot(training_data.seriousdlqin2yrs).set_title('Data Distribution')
+ax = plt.gca()
+for p in ax.patches:
+    height = p.get_height()
+    ax.text(p.get_x() + p.get_width()/2.,
+            height + 2,
+            '{:.2f}%'.format(100*(height/total_len)),
+            fontsize=14, ha='center', va='bottom')
+sns.set(font_scale=1.5)
+ax.set_xlabel("Labels for seriousdlqin2yrs attribute")
+ax.set_ylabel("Numbers of records")
+plt.show()
+
+Missing values
+In [9]:
+# You will get to know which column has missing value and it's give the count that how many records are missing 
+training_data.isnull().sum()
+Out[9]:
+seriousdlqin2yrs                            0
+revolvingutilizationofunsecuredlines        0
+age                                         0
+numberoftime3059dayspastduenotworse         0
+debtratio                                   0
+monthlyincome                           29731
+numberofopencreditlinesandloans             0
+numberoftimes90dayslate                     0
+numberrealestateloansorlines                0
+numberoftime6089dayspastduenotworse         0
+numberofdependents                       3924
+dtype: int64
+In [10]:
+# Graphical representation of the missing values.
+x = training_data.columns
+y = training_data.isnull().sum()
+sns.set()
+sns.barplot(x,y)
+ax = plt.gca()
+for p in ax.patches:
+    height = p.get_height()
+    ax.text(p.get_x() + p.get_width()/2.,
+            height + 2,
+            int(height),
+            fontsize=14, ha='center', va='bottom')
+sns.set(font_scale=1.5)
+ax.set_xlabel("Data Attributes")
+ax.set_ylabel("count of missing records for each attribute")
+plt.xticks(rotation=90)
+plt.show()
+
+In [11]:
+# Actual replacement of the missing value using mean value.
+training_data_mean_replace = training_data.fillna((training_data.mean()))
+training_data_mean_replace.head()
+Out[11]:
+seriousdlqin2yrs	revolvingutilizationofunsecuredlines	age	numberoftime3059dayspastduenotworse	debtratio	monthlyincome	numberofopencreditlinesandloans	numberoftimes90dayslate	numberrealestateloansorlines	numberoftime6089dayspastduenotworse	numberofdependents
+0	1	0.766127	45	2	0.802982	9120.0	13	0	6	0	2.0
+1	0	0.957151	40	0	0.121876	2600.0	4	0	0	0	1.0
+2	0	0.658180	38	1	0.085113	3042.0	2	1	0	0	0.0
+3	0	0.233810	30	0	0.036050	3300.0	5	0	0	0	0.0
+4	0	0.907239	49	1	0.024926	63588.0	7	0	1	0	0.0
+In [12]:
+training_data_mean_replace.isnull().sum()
+Out[12]:
+seriousdlqin2yrs                        0
+revolvingutilizationofunsecuredlines    0
+age                                     0
+numberoftime3059dayspastduenotworse     0
+debtratio                               0
+monthlyincome                           0
+numberofopencreditlinesandloans         0
+numberoftimes90dayslate                 0
+numberrealestateloansorlines            0
+numberoftime6089dayspastduenotworse     0
+numberofdependents                      0
+dtype: int64
+In [13]:
+# Actual replacement of the missing value using median value.
+training_data_median_replace = training_data.fillna((training_data.median()))
+training_data_median_replace.head()
+Out[13]:
+seriousdlqin2yrs	revolvingutilizationofunsecuredlines	age	numberoftime3059dayspastduenotworse	debtratio	monthlyincome	numberofopencreditlinesandloans	numberoftimes90dayslate	numberrealestateloansorlines	numberoftime6089dayspastduenotworse	numberofdependents
+0	1	0.766127	45	2	0.802982	9120.0	13	0	6	0	2.0
+1	0	0.957151	40	0	0.121876	2600.0	4	0	0	0	1.0
+2	0	0.658180	38	1	0.085113	3042.0	2	1	0	0	0.0
+3	0	0.233810	30	0	0.036050	3300.0	5	0	0	0	0.0
+4	0	0.907239	49	1	0.024926	63588.0	7	0	1	0	0.0
+In [14]:
+training_data_median_replace.isnull().sum()
+Out[14]:
+seriousdlqin2yrs                        0
+revolvingutilizationofunsecuredlines    0
+age                                     0
+numberoftime3059dayspastduenotworse     0
+debtratio                               0
+monthlyincome                           0
+numberofopencreditlinesandloans         0
+numberoftimes90dayslate                 0
+numberrealestateloansorlines            0
+numberoftime6089dayspastduenotworse     0
+numberofdependents                      0
+dtype: int64
+Correlation
+In [15]:
+training_data.fillna((training_data.median()), inplace=True)
+# Get the correlation of the training dataset
+training_data[training_data.columns[1:]].corr()
+Out[15]:
+revolvingutilizationofunsecuredlines	age	numberoftime3059dayspastduenotworse	debtratio	monthlyincome	numberofopencreditlinesandloans	numberoftimes90dayslate	numberrealestateloansorlines	numberoftime6089dayspastduenotworse	numberofdependents
+revolvingutilizationofunsecuredlines	1.000000	-0.005898	-0.001314	0.003961	0.006513	-0.011281	-0.001061	0.006235	-0.001048	0.001193
+age	-0.005898	1.000000	-0.062995	0.024188	0.027581	0.147705	-0.061005	0.033150	-0.057159	-0.215693
+numberoftime3059dayspastduenotworse	-0.001314	-0.062995	1.000000	-0.006542	-0.008370	-0.055312	0.983603	-0.030565	0.987005	-0.004590
+debtratio	0.003961	0.024188	-0.006542	1.000000	-0.018006	0.049565	-0.008320	0.120046	-0.007533	-0.044476
+monthlyincome	0.006513	0.027581	-0.008370	-0.018006	1.000000	0.086949	-0.010500	0.116273	-0.009252	0.066314
+numberofopencreditlinesandloans	-0.011281	0.147705	-0.055312	0.049565	0.086949	1.000000	-0.079984	0.433959	-0.071077	0.074026
+numberoftimes90dayslate	-0.001061	-0.061005	0.983603	-0.008320	-0.010500	-0.079984	1.000000	-0.045205	0.992796	-0.011962
+numberrealestateloansorlines	0.006235	0.033150	-0.030565	0.120046	0.116273	0.433959	-0.045205	1.000000	-0.039722	0.129399
+numberoftime6089dayspastduenotworse	-0.001048	-0.057159	0.987005	-0.007533	-0.009252	-0.071077	0.992796	-0.039722	1.000000	-0.012678
+numberofdependents	0.001193	-0.215693	-0.004590	-0.044476	0.066314	0.074026	-0.011962	0.129399	-0.012678	1.000000
+In [16]:
+sns.set()
+sns.set(font_scale=1.25)
+sns.heatmap(training_data[training_data.columns[1:]].corr(),annot=True,fmt=".1f")
+plt.show()
+
+Outliers Detection
+In [17]:
+# Percentile based outlier detection
+def percentile_based_outlier(data, threshold=95):
+    diff = (100 - threshold) / 2.0
+    (minval, maxval) = np.percentile(data, [diff, 100 - diff])
+    #return minval, maxval
+    return ((data < minval) | (data > maxval))
+#percentile_based_outlier(data=training_data.revolvingutilizationofunsecuredlines)
+
+# Another percentile based outlier detection method which is based on inter quertile(IQR) range
+# import numpy as np
+# def outliers_iqr(ys):
+#     quartile_1, quartile_3 = np.percentile(ys, [25, 75])
+#     iqr = quartile_3 - quartile_1
+#     lower_bound = quartile_1 - (iqr * 1.5)
+#     upper_bound = quartile_3 + (iqr * 1.5)
+#     return np.where((ys > upper_bound) | (ys < lower_bound))
+In [18]:
+def mad_based_outlier(points, threshold=3.5):
+    median_y = np.median(points)
+    median_absolute_deviation_y = np.median([np.abs(y - median_y) for y in points])
+    modified_z_scores = [0.6745 * (y - median_y) / median_absolute_deviation_y
+                         for y in points]
+
+    return np.abs(modified_z_scores) > threshold
+#mad_based_outlier(points=training_data.age)
+In [19]:
+def std_div(data, threshold=3):
+    std = data.std()
+    mean = data.mean()
+    isOutlier = []
+    for val in data:
+        if val/std > threshold:
+            isOutlier.append(True)
+        else:
+            isOutlier.append(False)
+    return isOutlier
+#std_div(data=training_data.age)
+In [20]:
+def outlierVote(data):
+    x = percentile_based_outlier(data)
+    y = mad_based_outlier(data)
+    z = std_div(data)
+    temp = zip(data.index, x, y, z)
+    final = []
+    for i in range(len(temp)):
+        if temp[i].count(False) >= 2:
+            final.append(False)
+        else:
+            final.append(True)
+    return final
+#outlierVote(data=training_data.age)
+In [21]:
+def plotOutlier(x):
+    fig, axes = plt.subplots(nrows=4)
+    for ax, func in zip(axes, [percentile_based_outlier, mad_based_outlier, std_div, outlierVote]):
+        sns.distplot(x, ax=ax, rug=True, hist=False)
+        outliers = x[func(x)]
+        ax.plot(outliers, np.zeros_like(outliers), 'ro', clip_on=False)
+
+    kwargs = dict(y=0.95, x=0.05, ha='left', va='top', size=20)
+    axes[0].set_title('Percentile-based Outliers', **kwargs)
+    axes[1].set_title('MAD-based Outliers', **kwargs)
+    axes[2].set_title('STD-based Outliers', **kwargs)
+    axes[3].set_title('Majority vote based Outliers', **kwargs)
+    fig.suptitle('Comparing Outlier Tests with n={}'.format(len(x)), size=20)
+    fig = plt.gcf()
+    fig.set_size_inches(15,10)
+In [22]:
+plotOutlier(training_data.revolvingutilizationofunsecuredlines.sample(5000))
+
+In [23]:
+plotOutlier(training_data.age.sample(1000))
+
+In [24]:
+plotOutlier(training_data.numberoftime3059dayspastduenotworse.sample(1000))
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:5: RuntimeWarning: invalid value encountered in double_scalars
+  """
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:5: RuntimeWarning: divide by zero encountered in double_scalars
+  """
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:7: RuntimeWarning: invalid value encountered in greater
+  import sys
+
+In [25]:
+plotOutlier(training_data.debtratio.sample(1000))
+
+In [26]:
+plotOutlier(training_data.monthlyincome.sample(1000))
+
+In [27]:
+plotOutlier(training_data.numberofopencreditlinesandloans.sample(1000))
+
+In [28]:
+plotOutlier(training_data.numberoftimes90dayslate.sample(1000))
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:5: RuntimeWarning: invalid value encountered in double_scalars
+  """
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:5: RuntimeWarning: divide by zero encountered in double_scalars
+  """
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:7: RuntimeWarning: invalid value encountered in greater
+  import sys
+
+In [29]:
+plotOutlier(training_data.numberrealestateloansorlines.sample(1000))
+
+In [30]:
+plotOutlier(training_data.numberoftime6089dayspastduenotworse.sample(1000))
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:5: RuntimeWarning: invalid value encountered in double_scalars
+  """
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:5: RuntimeWarning: divide by zero encountered in double_scalars
+  """
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:7: RuntimeWarning: invalid value encountered in greater
+  import sys
+
+In [31]:
+plotOutlier(training_data.numberofdependents.sample(1000))
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:5: RuntimeWarning: invalid value encountered in double_scalars
+  """
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:5: RuntimeWarning: divide by zero encountered in double_scalars
+  """
+/usr/local/lib/python2.7/dist-packages/ipykernel_launcher.py:7: RuntimeWarning: invalid value encountered in greater
+  import sys
+
+Handle the outliers
+In [32]:
+revNew = []
+training_data.revolvingutilizationofunsecuredlines
+for val in training_data.revolvingutilizationofunsecuredlines:
+    if val <= 0.99999:
+        revNew.append(val)
+    else:
+        revNew.append(0.99999)
+training_data.revolvingutilizationofunsecuredlines = revNew
+In [33]:
+training_data.age.plot.box()
+Out[33]:
+<matplotlib.axes._subplots.AxesSubplot at 0x7f624d9a0210>
+
+In [34]:
+import collections
+collections.Counter(training_data.age)
+Out[34]:
+Counter({0: 1,
+         21: 183,
+         22: 434,
+         23: 641,
+         24: 816,
+         25: 953,
+         26: 1193,
+         27: 1338,
+         28: 1560,
+         29: 1702,
+         30: 1937,
+         31: 2038,
+         32: 2050,
+         33: 2239,
+         34: 2155,
+         35: 2246,
+         36: 2379,
+         37: 2521,
+         38: 2631,
+         39: 2987,
+         40: 3093,
+         41: 3122,
+         42: 3082,
+         43: 3208,
+         44: 3294,
+         45: 3502,
+         46: 3714,
+         47: 3719,
+         48: 3806,
+         49: 3837,
+         50: 3753,
+         51: 3627,
+         52: 3609,
+         53: 3648,
+         54: 3561,
+         55: 3416,
+         56: 3589,
+         57: 3375,
+         58: 3443,
+         59: 3280,
+         60: 3258,
+         61: 3522,
+         62: 3568,
+         63: 3719,
+         64: 3058,
+         65: 2594,
+         66: 2494,
+         67: 2503,
+         68: 2235,
+         69: 1954,
+         70: 1777,
+         71: 1646,
+         72: 1649,
+         73: 1520,
+         74: 1451,
+         75: 1241,
+         76: 1183,
+         77: 1099,
+         78: 1054,
+         79: 981,
+         80: 876,
+         81: 774,
+         82: 647,
+         83: 512,
+         84: 480,
+         85: 483,
+         86: 407,
+         87: 357,
+         88: 313,
+         89: 276,
+         90: 198,
+         91: 154,
+         92: 93,
+         93: 87,
+         94: 47,
+         95: 45,
+         96: 18,
+         97: 17,
+         98: 6,
+         99: 9,
+         101: 3,
+         102: 3,
+         103: 3,
+         105: 1,
+         107: 1,
+         109: 2})
+In [35]:
+ageNew = []
+for val in training_data.age:
+    if val > 21:
+        ageNew.append(val)
+    else:
+        ageNew.append(21)
+        
+training_data.age = ageNew
+In [36]:
+collections.Counter(training_data.numberoftime3059dayspastduenotworse)
+Out[36]:
+Counter({0: 126018,
+         1: 16033,
+         2: 4598,
+         3: 1754,
+         4: 747,
+         5: 342,
+         6: 140,
+         7: 54,
+         8: 25,
+         9: 12,
+         10: 4,
+         11: 1,
+         12: 2,
+         13: 1,
+         96: 5,
+         98: 264})
+In [37]:
+New = []
+med = training_data.numberoftime3059dayspastduenotworse.median()
+for val in training_data.numberoftime3059dayspastduenotworse:
+    if ((val == 98) | (val == 96)):
+        New.append(med)
+    else:
+        New.append(val)
+
+training_data.numberoftime3059dayspastduenotworse = New
+In [38]:
+def outlierRatio(data):
+    functions = [percentile_based_outlier, mad_based_outlier, std_div, outlierVote]
+    outlierDict = {}
+    for func in functions:
+        funcResult = func(data)
+        count = 0
+        for val in funcResult:
+            if val == True:
+                count += 1 
+        outlierDict[str(func)[10:].split()[0]] = [count, '{:.2f}%'.format((float(count)/len(data))*100)]
+    
+    return outlierDict
+outlierRatio(training_data.debtratio)
+Out[38]:
+{'mad_based_outlier': [31727, '21.15%'],
+ 'outlierVote': [3750, '2.50%'],
+ 'percentile_based_outlier': [3750, '2.50%'],
+ 'std_div': [779, '0.52%']}
+In [39]:
+plotOutlier(training_data.debtratio.sample(1000))
+
+In [40]:
+def add_freq():
+    ncount = len(training_data)
+
+    ax2=ax.twinx()
+
+    ax2.yaxis.tick_left()
+    ax.yaxis.tick_right()
+
+    ax.yaxis.set_label_position('right')
+    ax2.yaxis.set_label_position('left')
+
+    ax2.set_ylabel('Frequency [%]')
+
+    for p in ax.patches:
+        x=p.get_bbox().get_points()[:,0]
+        y=p.get_bbox().get_points()[1,1]
+        ax.annotate('{:.1f}%'.format(100.*y/ncount), (x.mean(), y), 
+                ha='center', va='bottom')
+
+    ax2.set_ylim(0,100)
+    ax2.grid(None)
+ax = sns.countplot(mad_based_outlier(training_data.debtratio))
+
+add_freq()
+
+In [41]:
+minUpperBound = min([val for (val, out) in zip(training_data.debtratio, mad_based_outlier(training_data.debtratio)) if out == True])
+In [42]:
+newDebtRatio = []
+for val in training_data.debtratio:
+    if val > minUpperBound:
+        newDebtRatio.append(minUpperBound)
+    else:
+        newDebtRatio.append(val)
+
+training_data.debtratio = newDebtRatio
+In [43]:
+def plotOutlierFree(x):
+    fig, axes = plt.subplots(nrows=4)
+    nOutliers = []
+    for ax, func in zip(axes, [percentile_based_outlier, mad_based_outlier, std_div, outlierVote]):
+        tfOutlier = zip(x, func(x))
+        nOutliers.append(len([index for (index, bol) in tfOutlier if bol == True]))
+        outlierFree = [index for (index, bol) in tfOutlier if bol == True]
+        sns.distplot(outlierFree, ax=ax, rug=True, hist=False)
+        
+    kwargs = dict(y=0.95, x=0.05, ha='left', va='top', size=15)
+    axes[0].set_title('Percentile-based Outliers, removed: {r}'.format(r=nOutliers[0]), **kwargs)
+    axes[1].set_title('MAD-based Outliers, removed: {r}'.format(r=nOutliers[1]), **kwargs)
+    axes[2].set_title('STD-based Outliers, removed: {r}'.format(r=nOutliers[2]), **kwargs)
+    axes[3].set_title('Majority vote based Outliers, removed: {r}'.format(r=nOutliers[3]), **kwargs)
+    fig.suptitle('Outlier Removed By Method with n={}'.format(len(x)), size=20)
+    fig = plt.gcf()
+    fig.set_size_inches(15,10)
+In [44]:
+plotOutlierFree(training_data.monthlyincome.sample(1000))
+
+In [45]:
+def replaceOutlier(data, method = outlierVote, replace='median'):
+    '''replace: median (auto)
+                'minUpper' which is the upper bound of the outlier detection'''
+    vote = outlierVote(data)
+    x = pd.DataFrame(zip(data, vote), columns=['debt', 'outlier'])
+    if replace == 'median':
+        replace = x.debt.median()
+    elif replace == 'minUpper':
+        replace = min([val for (val, vote) in zip(data, vote) if vote == True])
+        if replace < data.mean():
+            return 'There are outliers lower than the sample mean'
+    debtNew = []
+    for i in range(x.shape[0]):
+        if x.iloc[i][1] == True:
+            debtNew.append(replace)
+        else:
+            debtNew.append(x.iloc[i][0])
+    
+    return debtNew
+In [46]:
+incomeNew = replaceOutlier(training_data.monthlyincome, replace='minUpper')
+In [47]:
+training_data.monthlyincome = incomeNew
+In [48]:
+collections.Counter(training_data.numberoftimes90dayslate)
+Out[48]:
+Counter({0: 141662,
+         1: 5243,
+         2: 1555,
+         3: 667,
+         4: 291,
+         5: 131,
+         6: 80,
+         7: 38,
+         8: 21,
+         9: 19,
+         10: 8,
+         11: 5,
+         12: 2,
+         13: 4,
+         14: 2,
+         15: 2,
+         17: 1,
+         96: 5,
+         98: 264})
+In [49]:
+def removeSpecificAndPutMedian(data, first = 98, second = 96):
+    New = []
+    med = data.median()
+    for val in data:
+        if ((val == first) | (val == second)):
+            New.append(med)
+        else:
+            New.append(val)
+            
+    return New
+In [50]:
+new = removeSpecificAndPutMedian(training_data.numberoftimes90dayslate)
+In [51]:
+training_data.numberoftimes90dayslate = new
+In [52]:
+collections.Counter(training_data.numberrealestateloansorlines)
+Out[52]:
+Counter({0: 56188,
+         1: 52338,
+         2: 31522,
+         3: 6300,
+         4: 2170,
+         5: 689,
+         6: 320,
+         7: 171,
+         8: 93,
+         9: 78,
+         10: 37,
+         11: 23,
+         12: 18,
+         13: 15,
+         14: 7,
+         15: 7,
+         16: 4,
+         17: 4,
+         18: 2,
+         19: 2,
+         20: 2,
+         21: 1,
+         23: 2,
+         25: 3,
+         26: 1,
+         29: 1,
+         32: 1,
+         54: 1})
+In [53]:
+realNew = []
+for val in training_data.numberrealestateloansorlines:
+    if val > 17:
+        realNew.append(17)
+    else:
+        realNew.append(val)
+training_data.numberrealestateloansorlines = realNew
+In [54]:
+collections.Counter(training_data.numberoftime6089dayspastduenotworse)
+Out[54]:
+Counter({0: 142396,
+         1: 5731,
+         2: 1118,
+         3: 318,
+         4: 105,
+         5: 34,
+         6: 16,
+         7: 9,
+         8: 2,
+         9: 1,
+         11: 1,
+         96: 5,
+         98: 264})
+In [55]:
+new = removeSpecificAndPutMedian(training_data.numberoftime6089dayspastduenotworse)
+training_data.numberoftime6089dayspastduenotworse = new
+In [56]:
+collections.Counter(training_data.numberofdependents)
+Out[56]:
+Counter({0.0: 90826,
+         1.0: 26316,
+         2.0: 19522,
+         3.0: 9483,
+         4.0: 2862,
+         5.0: 746,
+         6.0: 158,
+         7.0: 51,
+         8.0: 24,
+         9.0: 5,
+         10.0: 5,
+         13.0: 1,
+         20.0: 1})
+In [57]:
+depNew = []
+for var in training_data.numberofdependents:
+    if var > 10:
+        depNew.append(10)
+    else:
+        depNew.append(var)
+In [58]:
+training_data.numberofdependents = depNew
+Feature Importance
+In [59]:
+training_data.head()
+Out[59]:
+seriousdlqin2yrs	revolvingutilizationofunsecuredlines	age	numberoftime3059dayspastduenotworse	debtratio	monthlyincome	numberofopencreditlinesandloans	numberoftimes90dayslate	numberrealestateloansorlines	numberoftime6089dayspastduenotworse	numberofdependents
+0	1	0.766127	45	2.0	0.802982	9120.0	13	0.0	6	0.0	2.0
+1	0	0.957151	40	0.0	0.121876	2600.0	4	0.0	0	0.0	1.0
+2	0	0.658180	38	1.0	0.085113	3042.0	2	1.0	0	0.0	0.0
+3	0	0.233810	30	0.0	0.036050	3300.0	5	0.0	0	0.0	0.0
+4	0	0.907239	49	1.0	0.024926	16867.0	7	0.0	1	0.0	0.0
+In [60]:
+from sklearn.ensemble import RandomForestClassifier
+In [61]:
+training_data.columns[1:]
+Out[61]:
+Index([u'revolvingutilizationofunsecuredlines', u'age',
+       u'numberoftime3059dayspastduenotworse', u'debtratio', u'monthlyincome',
+       u'numberofopencreditlinesandloans', u'numberoftimes90dayslate',
+       u'numberrealestateloansorlines', u'numberoftime6089dayspastduenotworse',
+       u'numberofdependents'],
+      dtype='object')
+In [62]:
+X = training_data.drop('seriousdlqin2yrs', axis=1)
+y = training_data.seriousdlqin2yrs
+features_label = training_data.columns[1:]
+forest = RandomForestClassifier (n_estimators = 10000, random_state=0, n_jobs = -1)
+forest.fit(X,y)
+importances = forest.feature_importances_
+indices = np. argsort(importances)[::-1]
+for i in range(X.shape[1]):
+    print ("%2d) %-*s %f" % (i + 1, 30, features_label[i],importances[indices[i]]))
+ 1) revolvingutilizationofunsecuredlines 0.189053
+ 2) age                            0.154817
+ 3) numberoftime3059dayspastduenotworse 0.150809
+ 4) debtratio                      0.141929
+ 5) monthlyincome                  0.098143
+ 6) numberofopencreditlinesandloans 0.088968
+ 7) numberoftimes90dayslate        0.050406
+ 8) numberrealestateloansorlines   0.044934
+ 9) numberoftime6089dayspastduenotworse 0.044333
+10) numberofdependents             0.036607
+In [63]:
+plt.title('Feature Importances')
+plt.bar(range(X.shape[1]),importances[indices], color="green", align="center")
+plt.xticks(range(X.shape[1]),features_label, rotation=90)
+plt.xlim([-1, X.shape[1]])
+plt.show()
+
+Train and build baseline model
+In [64]:
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import AdaBoostClassifier, GradientBoostingClassifier, RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+In [65]:
+X = training_data.drop('seriousdlqin2yrs', axis=1)
+y = training_data.seriousdlqin2yrs
+In [66]:
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+In [67]:
+knMod = KNeighborsClassifier(n_neighbors=5, weights='uniform', algorithm='auto', leaf_size=30, p=2,
+                             metric='minkowski', metric_params=None)
+In [68]:
+knMod.fit(X_train, y_train)
+Out[68]:
+KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
+           metric_params=None, n_jobs=1, n_neighbors=5, p=2,
+           weights='uniform')
+In [69]:
+knMod.score(X_test, y_test)
+Out[69]:
+0.93162666666666671
+In [70]:
+test_labels=knMod.predict_proba(np.array(X_test.values))[:,1]
+In [71]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[71]:
+0.60201411712881137
+In [72]:
+glmMod = LogisticRegression(penalty='l1', dual=False, tol=0.0001, C=1.0, fit_intercept=True,
+                            intercept_scaling=1, class_weight=None, 
+                            random_state=None, solver='liblinear', max_iter=100,
+                            multi_class='ovr', verbose=2)
+In [73]:
+glmMod.fit(X_train, y_train)
+[LibLinear]
+Out[73]:
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+          intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
+          penalty='l1', random_state=None, solver='liblinear', tol=0.0001,
+          verbose=2, warm_start=False)
+In [74]:
+glmMod.score(X_test, y_test)
+Out[74]:
+0.93677333333333335
+In [75]:
+test_labels=glmMod.predict_proba(np.array(X_test.values))[:,1]
+In [76]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[76]:
+0.85162480217360725
+In [77]:
+adaMod = AdaBoostClassifier(base_estimator=None, n_estimators=200, learning_rate=1.0)
+In [78]:
+adaMod.fit(X_train, y_train)
+Out[78]:
+AdaBoostClassifier(algorithm='SAMME.R', base_estimator=None,
+          learning_rate=1.0, n_estimators=200, random_state=None)
+In [79]:
+adaMod.score(X_test, y_test)
+Out[79]:
+0.93559999999999999
+In [80]:
+test_labels=adaMod.predict_proba(np.array(X_test.values))[:,1]
+In [81]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[81]:
+0.86107504507505617
+In [82]:
+gbMod = GradientBoostingClassifier(loss='deviance', learning_rate=0.1, n_estimators=200, subsample=1.0,
+                                   min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, 
+                                   max_depth=3,
+                                   init=None, random_state=None, max_features=None, verbose=0)
+In [83]:
+gbMod.fit(X_train, y_train)
+Out[83]:
+GradientBoostingClassifier(criterion='friedman_mse', init=None,
+              learning_rate=0.1, loss='deviance', max_depth=3,
+              max_features=None, max_leaf_nodes=None,
+              min_impurity_split=1e-07, min_samples_leaf=1,
+              min_samples_split=2, min_weight_fraction_leaf=0.0,
+              n_estimators=200, presort='auto', random_state=None,
+              subsample=1.0, verbose=0, warm_start=False)
+In [84]:
+gbMod.score(X_test, y_test)
+Out[84]:
+0.93730666666666662
+In [85]:
+test_labels=gbMod.predict_proba(np.array(X_test.values))[:,1]
+In [86]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[86]:
+0.86707333976261558
+In [87]:
+rfMod = RandomForestClassifier(n_estimators=10, criterion='gini', max_depth=None, min_samples_split=2,
+                               min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features='auto',
+                               max_leaf_nodes=None, bootstrap=True, oob_score=False, n_jobs=1, 
+                               random_state=None, verbose=0)
+In [88]:
+rfMod.fit(X_train, y_train)
+Out[88]:
+RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+            max_depth=None, max_features='auto', max_leaf_nodes=None,
+            min_impurity_split=1e-07, min_samples_leaf=1,
+            min_samples_split=2, min_weight_fraction_leaf=0.0,
+            n_estimators=10, n_jobs=1, oob_score=False, random_state=None,
+            verbose=0, warm_start=False)
+In [89]:
+rfMod.score(X_test, y_test)
+Out[89]:
+0.93271999999999999
+In [90]:
+test_labels=rfMod.predict_proba(np.array(X_test.values))[:,1]
+In [91]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[91]:
+0.77501248195729056
+Cross Validation
+In [92]:
+from sklearn.model_selection import cross_val_score
+def cvDictGen(functions, scr, X_train=X, y_train=y, cv=5, verbose=1):
+    cvDict = {}
+    for func in functions:
+        cvScore = cross_val_score(func, X_train, y_train, cv=cv, verbose=verbose, scoring=scr)
+        cvDict[str(func).split('(')[0]] = [cvScore.mean(), cvScore.std()]
+    
+    return cvDict
+
+def cvDictNormalize(cvDict):
+    cvDictNormalized = {}
+    for key in cvDict.keys():
+        for i in cvDict[key]:
+            cvDictNormalized[key] = ['{:0.2f}'.format((cvDict[key][0]/cvDict[cvDict.keys()[0]][0])),
+                                     '{:0.2f}'.format((cvDict[key][1]/cvDict[cvDict.keys()[0]][1]))]
+    return cvDictNormalized
+In [93]:
+cvD = cvDictGen(functions=[knMod, glmMod, adaMod, gbMod, rfMod], scr='roc_auc')
+cvD
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:    5.8s finished
+[LibLinear][LibLinear][LibLinear][LibLinear][LibLinear]
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:    2.2s finished
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:   58.1s finished
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:  1.2min finished
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:    7.3s finished
+Out[93]:
+{'AdaBoostClassifier': [0.85863701255476743, 0.0020946319753293269],
+ 'GradientBoostingClassifier': [0.86391129717013126, 0.0026228253968856789],
+ 'KNeighborsClassifier': [0.5952570076118191, 0.0023729926242542316],
+ 'LogisticRegression': [0.84945716396813786, 0.0035554923725742175],
+ 'RandomForestClassifier': [0.77798459588607494, 0.0015388298538642907]}
+Hyper parameter optimization using Randomized search
+In [94]:
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import randint
+AdaBoost
+In [95]:
+adaHyperParams = {'n_estimators': [10,50,100,200,420]}
+In [96]:
+gridSearchAda = RandomizedSearchCV(estimator=adaMod, param_distributions=adaHyperParams, n_iter=5,
+                                   scoring='roc_auc', fit_params=None, cv=None, verbose=2).fit(X_train, y_train)
+Fitting 3 folds for each of 5 candidates, totalling 15 fits
+[CV] n_estimators=10 .................................................
+[CV] .................................. n_estimators=10, total=   0.4s
+[CV] n_estimators=10 .................................................
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.6s remaining:    0.0s
+[CV] .................................. n_estimators=10, total=   0.4s
+[CV] n_estimators=10 .................................................
+[CV] .................................. n_estimators=10, total=   0.4s
+[CV] n_estimators=50 .................................................
+[CV] .................................. n_estimators=50, total=   1.8s
+[CV] n_estimators=50 .................................................
+[CV] .................................. n_estimators=50, total=   1.9s
+[CV] n_estimators=50 .................................................
+[CV] .................................. n_estimators=50, total=   2.0s
+[CV] n_estimators=100 ................................................
+[CV] ................................. n_estimators=100, total=   4.0s
+[CV] n_estimators=100 ................................................
+[CV] ................................. n_estimators=100, total=   3.7s
+[CV] n_estimators=100 ................................................
+[CV] ................................. n_estimators=100, total=   3.8s
+[CV] n_estimators=200 ................................................
+[CV] ................................. n_estimators=200, total=   7.5s
+[CV] n_estimators=200 ................................................
+[CV] ................................. n_estimators=200, total=   7.3s
+[CV] n_estimators=200 ................................................
+[CV] ................................. n_estimators=200, total=   7.4s
+[CV] n_estimators=420 ................................................
+[CV] ................................. n_estimators=420, total=  15.4s
+[CV] n_estimators=420 ................................................
+[CV] ................................. n_estimators=420, total=  15.9s
+[CV] n_estimators=420 ................................................
+[CV] ................................. n_estimators=420, total=  15.9s
+[Parallel(n_jobs=1)]: Done  15 out of  15 | elapsed:  1.7min finished
+In [97]:
+gridSearchAda.best_params_, gridSearchAda.best_score_
+Out[97]:
+({'n_estimators': 100}, 0.85743173753105795)
+GradientBoosting
+In [98]:
+gbHyperParams = {'loss' : ['deviance', 'exponential'],
+                 'n_estimators': randint(10, 500),
+                 'max_depth': randint(1,10)}
+In [99]:
+gridSearchGB = RandomizedSearchCV(estimator=gbMod, param_distributions=gbHyperParams, n_iter=10,
+                                   scoring='roc_auc', fit_params=None, cv=None, verbose=2).fit(X_train, y_train)
+Fitting 3 folds for each of 10 candidates, totalling 30 fits
+[CV] n_estimators=88, loss=exponential, max_depth=9 ..................
+[CV] ... n_estimators=88, loss=exponential, max_depth=9, total=  24.8s
+[CV] n_estimators=88, loss=exponential, max_depth=9 ..................
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:   25.1s remaining:    0.0s
+[CV] ... n_estimators=88, loss=exponential, max_depth=9, total=  21.8s
+[CV] n_estimators=88, loss=exponential, max_depth=9 ..................
+[CV] ... n_estimators=88, loss=exponential, max_depth=9, total=  23.8s
+[CV] n_estimators=400, loss=deviance, max_depth=8 ....................
+[CV] ..... n_estimators=400, loss=deviance, max_depth=8, total= 1.0min
+[CV] n_estimators=400, loss=deviance, max_depth=8 ....................
+[CV] ..... n_estimators=400, loss=deviance, max_depth=8, total= 1.0min
+[CV] n_estimators=400, loss=deviance, max_depth=8 ....................
+[CV] ..... n_estimators=400, loss=deviance, max_depth=8, total=  59.8s
+[CV] n_estimators=452, loss=exponential, max_depth=3 .................
+[CV] .. n_estimators=452, loss=exponential, max_depth=3, total=  15.5s
+[CV] n_estimators=452, loss=exponential, max_depth=3 .................
+[CV] .. n_estimators=452, loss=exponential, max_depth=3, total=  14.6s
+[CV] n_estimators=452, loss=exponential, max_depth=3 .................
+[CV] .. n_estimators=452, loss=exponential, max_depth=3, total=  14.7s
+[CV] n_estimators=302, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=302, loss=exponential, max_depth=5, total=  18.1s
+[CV] n_estimators=302, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=302, loss=exponential, max_depth=5, total=  18.1s
+[CV] n_estimators=302, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=302, loss=exponential, max_depth=5, total=  17.4s
+[CV] n_estimators=106, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=106, loss=exponential, max_depth=5, total=   6.5s
+[CV] n_estimators=106, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=106, loss=exponential, max_depth=5, total=   6.5s
+[CV] n_estimators=106, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=106, loss=exponential, max_depth=5, total=   6.2s
+[CV] n_estimators=234, loss=exponential, max_depth=8 .................
+[CV] .. n_estimators=234, loss=exponential, max_depth=8, total=  36.6s
+[CV] n_estimators=234, loss=exponential, max_depth=8 .................
+[CV] .. n_estimators=234, loss=exponential, max_depth=8, total=  36.5s
+[CV] n_estimators=234, loss=exponential, max_depth=8 .................
+[CV] .. n_estimators=234, loss=exponential, max_depth=8, total=  36.1s
+[CV] n_estimators=283, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=283, loss=exponential, max_depth=5, total=  16.8s
+[CV] n_estimators=283, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=283, loss=exponential, max_depth=5, total=  16.7s
+[CV] n_estimators=283, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=283, loss=exponential, max_depth=5, total=  15.8s
+[CV] n_estimators=237, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=237, loss=exponential, max_depth=5, total=  13.8s
+[CV] n_estimators=237, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=237, loss=exponential, max_depth=5, total=  13.5s
+[CV] n_estimators=237, loss=exponential, max_depth=5 .................
+[CV] .. n_estimators=237, loss=exponential, max_depth=5, total=  13.5s
+[CV] n_estimators=264, loss=deviance, max_depth=1 ....................
+[CV] ..... n_estimators=264, loss=deviance, max_depth=1, total=   3.2s
+[CV] n_estimators=264, loss=deviance, max_depth=1 ....................
+[CV] ..... n_estimators=264, loss=deviance, max_depth=1, total=   3.2s
+[CV] n_estimators=264, loss=deviance, max_depth=1 ....................
+[CV] ..... n_estimators=264, loss=deviance, max_depth=1, total=   3.2s
+[CV] n_estimators=365, loss=exponential, max_depth=4 .................
+[CV] .. n_estimators=365, loss=exponential, max_depth=4, total=  16.2s
+[CV] n_estimators=365, loss=exponential, max_depth=4 .................
+[CV] .. n_estimators=365, loss=exponential, max_depth=4, total=  16.3s
+[CV] n_estimators=365, loss=exponential, max_depth=4 .................
+[CV] .. n_estimators=365, loss=exponential, max_depth=4, total=  15.9s
+[Parallel(n_jobs=1)]: Done  30 out of  30 | elapsed: 10.6min finished
+In [100]:
+gridSearchGB.best_params_, gridSearchGB.best_score_
+Out[100]:
+({'loss': 'exponential', 'max_depth': 5, 'n_estimators': 106},
+ 0.86144833079616612)
+Train models with help of new hyper parameter
+In [101]:
+bestGbModFitted = gridSearchGB.best_estimator_.fit(X_train, y_train)
+In [102]:
+bestAdaModFitted = gridSearchAda.best_estimator_.fit(X_train, y_train)
+In [103]:
+cvDictbestpara = cvDictGen(functions=[bestGbModFitted, bestAdaModFitted], scr='roc_auc')
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:   54.7s finished
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:   27.4s finished
+In [104]:
+cvDictbestpara
+Out[104]:
+{'AdaBoostClassifier': [0.85917740828466138, 0.0026272442965240275],
+ 'GradientBoostingClassifier': [0.86388834913373491, 0.0027044607243148157]}
+In [105]:
+test_labels=bestGbModFitted.predict_proba(np.array(X_test.values))[:,1]
+In [106]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[106]:
+0.86821632411194716
+In [107]:
+test_labels=bestAdaModFitted.predict_proba(np.array(X_test.values))[:,1]
+In [108]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[108]:
+0.86260958725784165
+Feature Transformation
+In [110]:
+import numpy as np
+from sklearn.preprocessing import FunctionTransformer
+
+transformer = FunctionTransformer(np.log1p)
+X_train_1 = np.array(X_train)
+X_train_transform = transformer.transform(X_train_1)
+In [111]:
+bestGbModFitted_transformed = gridSearchGB.best_estimator_.fit(X_train_transform, y_train)
+In [112]:
+bestAdaModFitted_transformed = gridSearchAda.best_estimator_.fit(X_train_transform, y_train)
+In [113]:
+cvDictbestpara_transform = cvDictGen(functions=[bestGbModFitted_transformed, bestAdaModFitted_transformed],
+                                     scr='roc_auc')
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:   59.4s finished
+[Parallel(n_jobs=1)]: Done   5 out of   5 | elapsed:   28.1s finished
+In [114]:
+cvDictbestpara_transform
+Out[114]:
+{'AdaBoostClassifier': [0.85917740828466138, 0.0026272442965240275],
+ 'GradientBoostingClassifier': [0.86388892996674593, 0.0027147060401564809]}
+In [115]:
+import numpy as np
+from sklearn.preprocessing import FunctionTransformer
+
+transformer = FunctionTransformer(np.log1p)
+X_test_1 = np.array(X_test)
+X_test_transform = transformer.transform(X_test_1)
+In [118]:
+X_test_transform
+Out[118]:
+array([[ 0.07033397,  4.06044301,  0.        , ...,  1.38629436,
+         0.        ,  0.        ],
+       [ 0.6776305 ,  3.55534806,  0.69314718, ...,  0.69314718,
+         0.        ,  0.69314718],
+       [ 0.01406411,  4.02535169,  0.        , ...,  0.        ,
+         0.        ,  0.        ],
+       ..., 
+       [ 0.52956201,  3.71357207,  0.        , ...,  1.60943791,
+         0.        ,  0.        ],
+       [ 0.18000267,  4.41884061,  0.        , ...,  1.09861229,
+         0.        ,  0.        ],
+       [ 0.04376775,  4.39444915,  0.        , ...,  1.09861229,
+         0.        ,  0.69314718]])
+In [119]:
+test_labels=bestGbModFitted_transformed.predict_proba(np.array(X_test_transform))[:,1]
+In [120]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[120]:
+0.86818612454924948
+In [121]:
+test_labels=bestAdaModFitted_transformed.predict_proba(np.array(X_test_transform))[:,1]
+In [122]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[122]:
+0.86260958725784165
+Voting based ensamble model
+In [139]:
+from sklearn.ensemble import VotingClassifier
+votingMod = VotingClassifier(estimators=[('gb', bestGbModFitted_transformed), 
+                                         ('ada', bestAdaModFitted_transformed)], voting='soft',weights=[2,1])
+votingMod = votingMod.fit(X_train_transform, y_train)
+In [140]:
+test_labels=votingMod.predict_proba(np.array(X_test_transform))[:,1]
+In [141]:
+votingMod.score(X_test_transform, y_test)
+Out[141]:
+0.93762666666666672
+In [142]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[142]:
+0.86828513403077934
+In [143]:
+from sklearn.ensemble import VotingClassifier
+votingMod_old = VotingClassifier(estimators=[('gb', bestGbModFitted), ('ada', bestAdaModFitted)], 
+                                 voting='soft',weights=[2,1])
+votingMod_old = votingMod.fit(X_train, y_train)
+In [144]:
+test_labels=votingMod_old.predict_proba(np.array(X_test.values))[:,1]
+In [145]:
+roc_auc_score(y_test,test_labels , average='macro', sample_weight=None)
+Out[145]:
+0.86832347818671751
+Testing on Real Test Dataset
+In [163]:
+# Read Training dataset as well as drop the index column
+test_data = pd.read_csv('./data/cs-test.csv').drop('Unnamed: 0', axis = 1)
+# For each column heading we replace "-" and convert the heading in lowercase 
+cleancolumn = []
+for i in range(len(test_data.columns)):
+    cleancolumn.append(test_data.columns[i].replace('-', '').lower())
+test_data.columns = cleancolumn
+In [164]:
+test_data.drop(['seriousdlqin2yrs'], axis=1, inplace=True)
+test_data.fillna((training_data.median()), inplace=True)
+Out[164]:
+revolvingutilizationofunsecuredlines	age	numberoftime3059dayspastduenotworse	debtratio	monthlyincome	numberofopencreditlinesandloans	numberoftimes90dayslate	numberrealestateloansorlines	numberoftime6089dayspastduenotworse	numberofdependents
+0	0.885519	43	0	0.177513	5700.0	4	0	0	0	0.0
+1	0.463295	57	0	0.527237	9141.0	15	0	4	0	2.0
+2	0.043275	59	0	0.687648	5083.0	12	0	1	0	2.0
+3	0.280308	38	1	0.925961	3200.0	7	0	2	0	0.0
+4	1.000000	27	0	0.019917	3865.0	4	0	0	0	1.0
+5	0.509791	63	0	0.342429	4140.0	4	0	0	0	1.0
+6	0.587778	50	0	1048.000000	0.0	5	0	0	0	3.0
+7	0.046149	79	1	0.369170	3301.0	8	0	1	0	1.0
+8	0.013527	68	0	2024.000000	5400.0	4	0	1	0	0.0
+9	1.000000	23	98	0.000000	0.0	0	98	0	98	0.0
+10	0.028485	37	0	0.319687	7400.0	8	0	1	0	1.0
+11	0.085077	52	0	0.903552	4250.0	6	0	2	0	0.0
+12	0.010596	68	0	0.007782	3854.0	16	0	0	0	0.0
+13	0.380679	30	0	0.377449	2500.0	12	0	0	0	1.0
+14	0.556894	56	0	0.697347	6822.0	14	0	1	0	1.0
+15	0.079056	28	0	0.105831	7133.0	8	0	0	0	0.0
+16	0.543013	72	0	0.461786	5900.0	10	0	2	0	1.0
+17	0.112346	37	0	0.144326	2916.0	7	0	0	0	0.0
+18	0.648285	29	0	0.174850	4500.0	4	0	0	1	1.0
+19	0.686406	43	0	487.000000	5400.0	10	0	0	0	1.0
+20	0.085910	48	0	0.196156	8844.0	8	0	1	0	1.0
+21	0.158549	61	0	0.353158	11920.0	13	0	1	0	0.0
+22	0.009303	69	0	0.384451	6083.0	4	0	2	0	0.0
+23	0.957442	69	2	0.666338	3041.0	8	1	1	1	1.0
+24	0.442489	50	1	0.286555	8500.0	17	0	1	0	2.0
+25	0.125267	51	0	3825.000000	5400.0	10	0	2	0	0.0
+26	1.000000	45	0	0.000000	4750.0	1	0	0	0	1.0
+27	0.181481	67	0	1509.000000	5400.0	12	0	1	0	0.0
+28	0.729397	34	0	0.335555	7500.0	6	0	2	0	1.0
+29	0.024445	47	0	5810.000000	5400.0	20	0	2	0	2.0
+...	...	...	...	...	...	...	...	...	...	...
+101473	0.662634	73	0	0.277090	5333.0	10	0	0	0	0.0
+101474	1.032484	47	0	0.365243	2036.0	2	0	0	1	0.0
+101475	1.000000	35	0	0.240467	1284.0	1	0	0	0	2.0
+101476	0.015908	68	0	0.217593	8400.0	11	0	2	0	1.0
+101477	0.096295	69	0	0.052316	3000.0	4	0	0	0	0.0
+101478	0.000000	43	0	0.095303	5833.0	6	0	1	0	2.0
+101479	0.024788	71	0	0.361319	3608.0	22	1	2	0	0.0
+101480	0.217134	48	0	0.602701	5257.0	15	0	1	0	0.0
+101481	0.048971	51	0	0.339154	7043.0	14	0	1	0	2.0
+101482	1.000000	33	98	0.000000	2000.0	0	98	0	98	3.0
+101483	0.124484	82	0	0.003797	7636.0	2	0	0	0	0.0
+101484	0.065636	60	0	0.306759	7500.0	10	0	3	0	1.0
+101485	0.043139	81	0	0.014548	3917.0	4	0	0	0	0.0
+101486	0.078280	55	0	0.495979	2983.0	16	0	2	0	1.0
+101487	0.000961	64	0	2.000000	5400.0	5	0	0	0	0.0
+101488	0.179587	68	0	0.268839	7550.0	8	0	1	0	0.0
+101489	1.031359	34	0	0.305339	3333.0	6	0	0	0	1.0
+101490	0.875649	43	2	0.512893	9500.0	8	0	5	0	2.0
+101491	0.228665	44	1	0.080143	8958.0	6	0	0	0	0.0
+101492	0.139191	58	1	3.183267	501.0	11	0	1	0	3.0
+101493	0.035549	58	0	0.290323	11128.0	7	0	2	0	2.0
+101494	0.218356	56	0	0.295803	1500.0	3	0	0	0	0.0
+101495	0.718874	35	1	0.308047	4125.0	8	0	0	1	2.0
+101496	0.021654	78	0	18.000000	5400.0	8	0	0	0	0.0
+101497	0.045230	67	0	0.012198	5000.0	4	0	0	0	0.0
+101498	0.282653	24	0	0.068522	1400.0	5	0	0	0	0.0
+101499	0.922156	36	3	0.934217	7615.0	8	0	2	0	4.0
+101500	0.081596	70	0	836.000000	5400.0	3	0	0	0	0.0
+101501	0.335457	56	0	3568.000000	5400.0	8	0	2	1	3.0
+101502	0.441842	29	0	0.198918	5916.0	12	0	0	0	0.0
+101503 rows × 10 columns
+
+In [165]:
+test_labels_votingMod_old = votingMod_old.predict_proba(np.array(test_data.values))[:,1]
+print (len(test_labels_votingMod_old))
+101503
+In [166]:
+output = pd.DataFrame({'ID':test_data.index, 'probability':test_labels_votingMod_old})
+In [167]:
+output.to_csv("./predictions.csv", index=False)
+In [168]:
+import numpy as np
+from sklearn.preprocessing import FunctionTransformer
+
+transformer = FunctionTransformer(np.log1p)
+test_data_temp = np.array(test_data)
+test_data_transform = transformer.transform(test_data_temp)
+In [169]:
+test_labels_votingMod = votingMod.predict_proba(np.array(test_data.values))[:,1]
+print (len(test_labels_votingMod_old))
+101503
+In [170]:
+output = pd.DataFrame({'ID':test_data.index, 'probability':test_labels_votingMod})
+In [171]:
+output.to_csv("./predictions_voting_Feature_transformation.csv", index=False)
