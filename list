@@ -1,5 +1,13 @@
 https://www.codementor.io/jhwatts2010/counting-words-with-r-ds35hzgmj
 https://stackoverflow.com/questions/18101047/list-of-word-frequencies-using-r
+https://stackoverflow.com/questions/21533899/in-r-use-gsub-to-remove-all-punctuation-except-period/39745610
+https://discuss.analyticsvidhya.com/t/how-to-provide-a-custom-stop-word-list-in-r/6755/3
+https://stackoverflow.com/questions/15255709/r-regex-remove-all-punctuation-except-apostrophe
+
+gsub("(?!')[[:punct:]]", "", str2, perl=TRUE)
+# [1] "this doesn't not have an apostrophe"
+gsub("[^'[:lower:] ]", "", str2) 
+# [1] "this doesn't not have an apostrophe"
 
 
 
@@ -7,5 +15,6 @@ https://stackoverflow.com/questions/18101047/list-of-word-frequencies-using-r
 
 
 Neo4j
+https://www.scribd.com/document/317905636/Neo4J-Cheat-sheet
 https://colinfay.me/rstatsnyc-neo4j/
 
